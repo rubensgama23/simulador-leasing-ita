@@ -44,6 +44,9 @@ residual_cliente = st.number_input("Residual pago no final (bullet) (R$)", value
 taxa_juros_anual = st.number_input("Taxa de juros anual do FIDC (%)", value=20.0)
 capital_fidc = st.number_input("Valor captado via FIDC (R$)", value=100000.0)
 
+def format_brl(valor):
+    return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
 if st.button("Calcular"):
     resultado = calcular_operacao(
         valor_leasing, valor_aquisicao, custos_operacionais,
@@ -53,4 +56,7 @@ if st.button("Calcular"):
     
     st.subheader("📈 Resultado")
     for chave, valor in resultado.items():
-        st.write(f"**{chave}:** R$ {valor:,.2f}" if "R$" in chave else f"**{chave}:** {valor:.2f}%")
+        if "R$" in chave:
+            st.write(f"**{chave}:** {format_brl(valor)}")
+        else:
+            st.write(f"**{chave}:** {valor:.2f}%")
