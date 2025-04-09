@@ -45,7 +45,12 @@ taxa_juros_anual = st.number_input("Taxa de juros anual do FIDC (%)", value=20.0
 capital_fidc = st.number_input("Valor captado via FIDC (R$)", value=100000.0)
 
 def format_brl(valor):
-    return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    inteiro, decimal = f"{valor:.2f}".split(".")
+    partes = []
+    while inteiro:
+        partes.insert(0, inteiro[-3:])
+        inteiro = inteiro[:-3]
+    return f"R$ {'.'.join(partes)},{decimal}"
 
 if st.button("Calcular"):
     resultado = calcular_operacao(
