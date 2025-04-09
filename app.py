@@ -8,8 +8,9 @@ st.title("Simulador de ROI - Frota Corporativa")
 st.caption("Versão institucional • Desenvolvido para ITA Frotas")
 st.markdown("---")
 
-def calcular_roi(valor_fipe, desconto, receita_mensal, juros_mensal, prazo, desvalorizacao, tributos,
+def calcular_roi(valor_fipe, desconto, receita_mensal, juros_mensal, prazo, desvalorizacao,
                  custo_op, custo_adm, custo_buro, qtd):
+    tributos = 0.34  # premissa fixa
     valor_pago = valor_fipe * (1 - desconto)
     total_aquisicao = valor_pago * qtd
 
@@ -39,23 +40,29 @@ def calcular_roi(valor_fipe, desconto, receita_mensal, juros_mensal, prazo, desv
     return round(lucro_liquido, 2), round(roi * 100, 2)
 
 # Sidebar de entrada
-desconto = st.sidebar.slider("Desconto na compra (%)", 0.0, 50.0, 20.0) / 100
 valor_fipe = st.sidebar.number_input("Valor FIPE (R$)", value=125000)
+desconto = st.sidebar.number_input("Desconto na compra (%)", value=20.0) / 100
 prazo = st.sidebar.selectbox("Prazo (meses)", [12, 24, 36])
-desvalorizacao = st.sidebar.slider("Desvalorizacao anual (%)", 0.0, 30.0, 10.0) / 100
-juros = st.sidebar.slider("Juros mensal (%)", 0.0, 5.0, 1.2) / 100
-tributos = st.sidebar.slider("Carga tributária (%)", 0.0, 50.0, 34.0) / 100
+desvalorizacao = st.sidebar.number_input("Desvalorização anual (%)", value=10.0) / 100
+juros = st.sidebar.number_input("Juros mensal (%)", value=1.2) / 100
 qtd = st.sidebar.number_input("Qtd. de veículos", value=10)
 
 st.markdown("### Premissas de custo (% sobre valor do veículo pago)")
-custo_op = st.slider("Custos operacionais mensais", 0.0, 5.0, 1.0) / 100
-custo_adm = st.slider("Despesas administrativas mensais", 0.0, 5.0, 0.55) / 100
-custo_buro = st.slider("Custos burocráticos totais", 0.0, 10.0, 5.0) / 100
+custo_op = st.number_input("Custos operacionais mensais (%)", value=1.00) / 100
+st.caption("Padrão: 1,00%")
+
+custo_adm = st.number_input("Despesas administrativas mensais (%)", value=0.55) / 100
+st.caption("Padrão: 0,55%")
+
+custo_buro = st.number_input("Custos burocráticos totais (%)", value=5.00) / 100
+st.caption("Padrão: 5,00%")
 
 receita = st.number_input("Receita mensal por veículo (R$)", value=3000)
 
+st.markdown("**Premissa:** carga tributária fixa de 34% sobre o lucro.")
+
 if st.button("Calcular ROI"):
-    lucro, roi = calcular_roi(valor_fipe, desconto, receita, juros, prazo, desvalorizacao, tributos,
+    lucro, roi = calcular_roi(valor_fipe, desconto, receita, juros, prazo, desvalorizacao,
                               custo_op, custo_adm, custo_buro, qtd)
     st.subheader("Resultado")
     st.success(f"Lucro líquido: R$ {lucro:,.2f}")
