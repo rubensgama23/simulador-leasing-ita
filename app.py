@@ -32,17 +32,17 @@ def calcular_operacao(
     }
 
 st.title("📊 Simulador de Leasing ITA")
-st.caption("Todos os valores em milhares de reais (mil R$)")
+st.caption("Todos os valores estão em reais (R$)")
 
-# Inputs em mil R$, convertidos para R$
-valor_leasing = st.number_input("Valor de referência do veículo (mil R$)", value=125.0) * 1000
-valor_aquisicao = st.number_input("Valor real de aquisição do veículo (mil R$)", value=100.0) * 1000
-custos_operacionais = st.number_input("Custos operacionais totais (mil R$)", value=35.0) * 1000
+# Inputs diretamente em R$
+valor_leasing = st.number_input("Valor de referência do veículo (R$)", value=125000.0)
+valor_aquisicao = st.number_input("Valor real de aquisição do veículo (R$)", value=100000.0)
+custos_operacionais = st.number_input("Custos operacionais totais (R$)", value=35000.0)
 prazo_meses = st.slider("Prazo do contrato (meses)", 12, 60, 36)
-parcela_cliente = st.number_input("Parcela mensal do cliente (mil R$)", value=3.20) * 1000
-residual_cliente = st.number_input("Residual pago no final (mil R$)", value=63.32) * 1000
+parcela_cliente = st.number_input("Parcela mensal do cliente (R$)", value=3200.0)
+residual_cliente = st.number_input("Residual pago no final (bullet) (R$)", value=63320.0)
 taxa_juros_anual = st.number_input("Taxa de juros anual do FIDC (%)", value=20.0)
-capital_fidc = st.number_input("Valor captado via FIDC (mil R$)", value=100.0) * 1000
+capital_fidc = st.number_input("Valor captado via FIDC (R$)", value=100000.0)
 
 if st.button("Calcular"):
     resultado = calcular_operacao(
