@@ -1,54 +1,72 @@
+
 import streamlit as st
 
-st.set_page_config(page_title="Simulador de Leasing", layout="centered")
+st.set_page_config(page_title="Simulador ROI - ITA Frotas", layout="wide")
 
-def calcular_operacao(
-    valor_leasing, valor_aquisicao, custos_operacionais,
-    prazo_meses, parcela_cliente, residual_cliente,
-    taxa_juros_anual, capital_fidc
-):
-    taxa_mensal = (1 + taxa_juros_anual / 100) ** (1/12) - 1
-    pmt_fidc = capital_fidc * (taxa_mensal / (1 - (1 + taxa_mensal) ** -prazo_meses))
-    total_fidc = pmt_fidc * prazo_meses
+st.image("logo_ita.png", width=160)
+st.title("Simulador de ROI - Frota Corporativa")
+st.caption("Versão institucional • Desenvolvido para ITA Frotas")
+st.markdown("---")
 
-    desembolso_mensal = custos_operacionais / prazo_meses
-    fator_acumulacao = ((1 + taxa_mensal) ** prazo_meses - 1) / taxa_mensal
-    custo_capital_proprio = desembolso_mensal * fator_acumulacao
+def calcular_roi(valor_fipe, desconto, receita_mensal, juros_mensal, prazo, desvalorizacao,
+                 custo_op, custo_adm, custo_buro, qtd):
+    tributos = 0.34  # premissa fixa
+    valor_pago = valor_fipe * (1 - desconto)
+    total_aquisicao = valor_pago * qtd
 
-    receita_cliente = parcela_cliente * prazo_meses + residual_cliente
-    lucro = receita_cliente - total_fidc - custo_capital_proprio
-    roe_nominal = (lucro / custos_operacionais) * 100 if custos_operacionais > 0 else 0
-    roe_anualizado = ((1 + lucro / custos_operacionais) ** (1 / (prazo_meses / 12)) - 1) * 100 if custos_operacionais > 0 else 0
+    mensal_op = custo_op * valor_pago
+    mensal_adm = custo_adm * valor_pago
+    total_buro = custo_buro * valor_pago
+    mensal_buro = total_buro / prazo
 
-    return {
-        "PMT FIDC (R$)": round(pmt_fidc, 2),
-        "Total Pago ao FIDC (R$)": round(total_fidc, 2),
-        "Custo Capital Próprio (R$)": round(custo_capital_proprio, 2),
-        "Receita Cliente (R$)": round(receita_cliente, 2),
-        "Lucro Líquido (R$)": round(lucro, 2),
-        "ROE Nominal (%)": round(roe_nominal, 2),
-        "ROE Anualizado (%)": round(roe_anualizado, 2)
-    }
+    custo_total_mensal = (mensal_op + mensal_adm + mensal_buro) * qtd
 
-st.title("📊 Simulador de Leasing ITA")
-st.caption("Modelo com FIDC e capital de giro próprio remunerado")
+    desval_total = desvalorizacao * (prazo / 12)
+    valor_residual = valor_fipe * (1 - desval_total) * qtd
 
-valor_leasing = st.number_input("Valor de referência do veículo (leasing)", value=125.0)
-valor_aquisicao = st.number_input("Valor real de aquisição do veículo", value=100.0)
-custos_operacionais = st.number_input("Custos operacionais totais (36 meses)", value=35.0)
-prazo_meses = st.slider("Prazo do contrato (meses)", 12, 60, 36)
-parcela_cliente = st.number_input("Parcela mensal do cliente (R$)", value=3.20)
-residual_cliente = st.number_input("Residual pago no final (bullet) (R$)", value=63.32)
-taxa_juros_anual = st.number_input("Taxa de juros anual do FIDC (%)", value=20.0)
-capital_fidc = st.number_input("Valor captado via FIDC", value=100.0)
+    parcela_mensal = total_aquisicao * (
+        juros_mensal * (1 + juros_mensal)**prazo
+    ) / ((1 + juros_mensal)**prazo - 1)
 
-if st.button("Calcular"):
-    resultado = calcular_operacao(
-        valor_leasing, valor_aquisicao, custos_operacionais,
-        prazo_meses, parcela_cliente, residual_cliente,
-        taxa_juros_anual, capital_fidc
-    )
-    
-    st.subheader("📈 Resultado")
-    for chave, valor in resultado.items():
-        st.write(f"**{chave}:** R$ {valor:,.2f}" if "R$" in chave else f"**{chave}:** {valor:.2f}%")
+    total_pago = parcela_mensal * prazo
+    receita_total = receita_mensal * qtd * prazo
+    receita_gerada = receita_total + valor_residual
+
+    lucro_bruto = receita_gerada - total_pago
+    lucro_antes_ir = lucro_bruto - (custo_total_mensal * prazo)
+    lucro_liquido = lucro_antes_ir * (1 - tributos)
+
+    roi = lucro_liquido / total_aquisicao
+    return round(lucro_liquido, 2), round(roi * 100, 2)
+
+# Sidebar de entrada
+valor_fipe = st.sidebar.number_input("Valor FIPE (R$)", value=125000)
+desconto = st.sidebar.number_input("Desconto na compra (%)", value=20.0) / 100
+prazo = st.sidebar.selectbox("Prazo (meses)", [12, 24, 36])
+desvalorizacao = st.sidebar.number_input("Desvalorização anual (%)", value=10.0) / 100
+juros = st.sidebar.number_input("Juros mensal (%)", value=1.2) / 100
+qtd = st.sidebar.number_input("Qtd. de veículos", value=10)
+
+st.markdown("### Premissas de custo (% sobre valor do veículo pago)")
+custo_op = st.number_input("Custos operacionais mensais (%)", value=1.00) / 100
+st.caption("Padrão: 1,00%")
+
+custo_adm = st.number_input("Despesas administrativas mensais (%)", value=0.55) / 100
+st.caption("Padrão: 0,55%")
+
+custo_buro = st.number_input("Custos burocráticos totais (%)", value=5.00) / 100
+st.caption("Padrão: 5,00%")
+
+receita = st.number_input("Receita mensal por veículo (R$)", value=3000)
+
+st.markdown("**Premissa:** carga tributária fixa de 34% sobre o lucro.")
+
+if st.button("Calcular ROI"):
+    lucro, roi = calcular_roi(valor_fipe, desconto, receita, juros, prazo, desvalorizacao,
+                              custo_op, custo_adm, custo_buro, qtd)
+    st.subheader("Resultado")
+    st.success(f"Lucro líquido: R$ {lucro:,.2f}")
+    st.success(f"ROI líquido: {roi:.2f}%")
+
+    custo_total_percent_fipe = 0.35 * (1 - desconto)
+    st.info(f"Total de custos estimado equivale a aproximadamente **{custo_total_percent_fipe:.2%}** do valor FIPE.")
